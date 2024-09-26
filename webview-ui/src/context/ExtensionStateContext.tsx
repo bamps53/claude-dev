@@ -14,6 +14,7 @@ interface ExtensionStateContextType extends ExtensionState {
 	setCustomInstructions: (value?: string) => void
 	setAlwaysAllowReadOnly: (value: boolean) => void
 	setShowAnnouncement: (value: boolean) => void
+	setAlwaysAllowAll: (value: boolean) => void
 }
 
 const ExtensionStateContext = createContext<ExtensionStateContextType | undefined>(undefined)
@@ -24,6 +25,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		claudeMessages: [],
 		taskHistory: [],
 		shouldShowAnnouncement: false,
+		alwaysAllowAll: false,
 	})
 	const [didHydrateState, setDidHydrateState] = useState(false)
 	const [showWelcome, setShowWelcome] = useState(false)
@@ -37,15 +39,15 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 			const config = message.state?.apiConfiguration
 			const hasKey = config
 				? [
-						config.apiKey,
-						config.openRouterApiKey,
-						config.awsRegion,
-						config.vertexProjectId,
-						config.openAiApiKey,
-						config.ollamaModelId,
-						config.geminiApiKey,
-						config.openAiNativeApiKey,
-				  ].some((key) => key !== undefined)
+					config.apiKey,
+					config.openRouterApiKey,
+					config.awsRegion,
+					config.vertexProjectId,
+					config.openAiApiKey,
+					config.ollamaModelId,
+					config.geminiApiKey,
+					config.openAiNativeApiKey,
+				].some((key) => key !== undefined)
 				: false
 			setShowWelcome(!hasKey)
 			setDidHydrateState(true)
@@ -74,6 +76,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setCustomInstructions: (value) => setState((prevState) => ({ ...prevState, customInstructions: value })),
 		setAlwaysAllowReadOnly: (value) => setState((prevState) => ({ ...prevState, alwaysAllowReadOnly: value })),
 		setShowAnnouncement: (value) => setState((prevState) => ({ ...prevState, shouldShowAnnouncement: value })),
+		setAlwaysAllowAll: (value) => setState((prevState) => ({ ...prevState, allwaysAllAll: value })),
 	}
 
 	return <ExtensionStateContext.Provider value={contextValue}>{children}</ExtensionStateContext.Provider>

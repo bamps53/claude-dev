@@ -19,6 +19,8 @@ const SettingsView = ({ onDone }: SettingsViewProps) => {
 		setCustomInstructions,
 		alwaysAllowReadOnly,
 		setAlwaysAllowReadOnly,
+		alwaysAllowAll,
+		setAlwaysAllowAll,
 	} = useExtensionState()
 	const [apiErrorMessage, setApiErrorMessage] = useState<string | undefined>(undefined)
 
@@ -31,6 +33,7 @@ const SettingsView = ({ onDone }: SettingsViewProps) => {
 			vscode.postMessage({ type: "apiConfiguration", apiConfiguration })
 			vscode.postMessage({ type: "customInstructions", text: customInstructions })
 			vscode.postMessage({ type: "alwaysAllowReadOnly", bool: alwaysAllowReadOnly })
+			vscode.postMessage({ type: "alwaysAllowAll", bool: alwaysAllowAll })
 			onDone()
 		}
 	}
@@ -120,6 +123,22 @@ const SettingsView = ({ onDone }: SettingsViewProps) => {
 						}}>
 						When enabled, Claude will automatically read files, view directories, and inspect sites without
 						requiring you to click the Allow button.
+					</p>
+				</div>
+
+				<div style={{ marginBottom: 5 }}>
+					<VSCodeCheckbox
+						checked={alwaysAllowAll}
+						onChange={(e: any) => setAlwaysAllowAll(e.target.checked)}>
+						<span style={{ fontWeight: "500" }}>AutoRun Mode</span>
+					</VSCodeCheckbox>
+					<p
+						style={{
+							fontSize: "12px",
+							marginTop: "5px",
+							color: "var(--vscode-descriptionForeground)",
+						}}>
+						When enabled, Claude will automatically accept all requests without requiring you to click the Allow button.
 					</p>
 				</div>
 

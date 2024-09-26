@@ -42,6 +42,7 @@ type GlobalStateKey =
 	| "lastShownAnnouncementId"
 	| "customInstructions"
 	| "alwaysAllowReadOnly"
+	| "alwaysAllowAll"
 	| "taskHistory"
 	| "openAiBaseUrl"
 	| "openAiModelId"
@@ -199,18 +200,19 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 
 	async initClaudeDevWithTask(task?: string, images?: string[]) {
 		await this.clearTask() // ensures that an exising task doesn't exist before starting a new one, although this shouldn't be possible since user must clear task before starting a new one
-		const { apiConfiguration, customInstructions, alwaysAllowReadOnly } = await this.getState()
-		this.claudeDev = new ClaudeDev(this, apiConfiguration, customInstructions, alwaysAllowReadOnly, task, images)
+		const { apiConfiguration, customInstructions, alwaysAllowReadOnly, alwaysAllowAll } = await this.getState()
+		this.claudeDev = new ClaudeDev(this, apiConfiguration, customInstructions, alwaysAllowReadOnly, alwaysAllowAll, task, images)
 	}
 
 	async initClaudeDevWithHistoryItem(historyItem: HistoryItem) {
 		await this.clearTask()
-		const { apiConfiguration, customInstructions, alwaysAllowReadOnly } = await this.getState()
+		const { apiConfiguration, customInstructions, alwaysAllowReadOnly, alwaysAllowAll } = await this.getState()
 		this.claudeDev = new ClaudeDev(
 			this,
 			apiConfiguration,
 			customInstructions,
 			alwaysAllowReadOnly,
+			alwaysAllowAll,
 			undefined,
 			undefined,
 			historyItem
@@ -382,6 +384,11 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 					case "alwaysAllowReadOnly":
 						await this.updateGlobalState("alwaysAllowReadOnly", message.bool ?? undefined)
 						this.claudeDev?.updateAlwaysAllowReadOnly(message.bool ?? undefined)
+						await this.postStateToWebview()
+						break
+					case "alwaysAllowAll":
+						await this.updateGlobalState("alwaysAllowAll", message.bool ?? undefined)
+						this.claudeDev?.updateAlwaysAllowAll(message.bool ?? undefined)
 						await this.postStateToWebview()
 						break
 					case "askResponse":
@@ -582,13 +589,14 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 	}
 
 	async getStateToPostToWebview() {
-		const { apiConfiguration, lastShownAnnouncementId, customInstructions, alwaysAllowReadOnly, taskHistory } =
+		const { apiConfiguration, lastShownAnnouncementId, customInstructions, alwaysAllowReadOnly, alwaysAllowAll, taskHistory } =
 			await this.getState()
 		return {
 			version: this.context.extension?.packageJSON?.version ?? "",
 			apiConfiguration,
 			customInstructions,
 			alwaysAllowReadOnly,
+			alwaysAllowAll,
 			uriScheme: vscode.env.uriScheme,
 			claudeMessages: this.claudeDev?.claudeMessages || [],
 			taskHistory: (taskHistory || []).filter((item) => item.ts && item.task).sort((a, b) => b.ts - a.ts),
@@ -706,6 +714,7 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 			lastShownAnnouncementId,
 			customInstructions,
 			alwaysAllowReadOnly,
+			alwaysAllowAll,
 			taskHistory,
 		] = await Promise.all([
 			this.getGlobalState("apiProvider") as Promise<ApiProvider | undefined>,
@@ -730,6 +739,7 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 			this.getGlobalState("lastShownAnnouncementId") as Promise<string | undefined>,
 			this.getGlobalState("customInstructions") as Promise<string | undefined>,
 			this.getGlobalState("alwaysAllowReadOnly") as Promise<boolean | undefined>,
+			this.getGlobalState("alwaysAllowAll") as Promise<boolean | undefined>,
 			this.getGlobalState("taskHistory") as Promise<HistoryItem[] | undefined>,
 		])
 
@@ -772,6 +782,7 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 			lastShownAnnouncementId,
 			customInstructions,
 			alwaysAllowReadOnly: alwaysAllowReadOnly ?? false,
+			alwaysAllowAll: alwaysAllowAll ?? false,
 			taskHistory,
 		}
 	}

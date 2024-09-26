@@ -49,6 +49,7 @@ export class ClaudeDev {
 	private didEditFile: boolean = false
 	private customInstructions?: string
 	private alwaysAllowReadOnly: boolean
+	private alwaysAllowAll: boolean
 	apiConversationHistory: Anthropic.MessageParam[] = []
 	claudeMessages: ClaudeMessage[] = []
 	private askResponse?: ClaudeAskResponse
@@ -64,6 +65,7 @@ export class ClaudeDev {
 		apiConfiguration: ApiConfiguration,
 		customInstructions?: string,
 		alwaysAllowReadOnly?: boolean,
+		alwaysAllowAll?: boolean,
 		task?: string,
 		images?: string[],
 		historyItem?: HistoryItem
@@ -74,6 +76,7 @@ export class ClaudeDev {
 		this.urlContentFetcher = new UrlContentFetcher(provider.context)
 		this.customInstructions = customInstructions
 		this.alwaysAllowReadOnly = alwaysAllowReadOnly ?? false
+		this.alwaysAllowAll = alwaysAllowAll ?? false
 
 		if (historyItem) {
 			this.taskId = historyItem.id
@@ -96,6 +99,10 @@ export class ClaudeDev {
 
 	updateAlwaysAllowReadOnly(alwaysAllowReadOnly: boolean | undefined) {
 		this.alwaysAllowReadOnly = alwaysAllowReadOnly ?? false
+	}
+
+	updateAlwaysAllowAll(alwaysAllowAll: boolean | undefined) {
+		this.alwaysAllowAll = alwaysAllowAll ?? false
 	}
 
 	async handleWebviewAskResponse(askResponse: ClaudeAskResponse, text?: string, images?: string[]) {
@@ -695,24 +702,30 @@ export class ClaudeDev {
 				text?: string
 				images?: string[]
 			}
-			if (fileExists) {
-				userResponse = await this.ask(
-					"tool",
-					JSON.stringify({
-						tool: "editedExistingFile",
-						path: this.getReadablePath(relPath),
-						diff: this.createPrettyPatch(relPath, originalContent, newContent),
-					} satisfies ClaudeSayTool)
-				)
-			} else {
-				userResponse = await this.ask(
-					"tool",
-					JSON.stringify({
-						tool: "newFileCreated",
-						path: this.getReadablePath(relPath),
-						content: newContent,
-					} satisfies ClaudeSayTool)
-				)
+			if (!this.alwaysAllowAll) {
+				if (fileExists) {
+					userResponse = await this.ask(
+						"tool",
+						JSON.stringify({
+							tool: "editedExistingFile",
+							path: this.getReadablePath(relPath),
+							diff: this.createPrettyPatch(relPath, originalContent, newContent),
+						} satisfies ClaudeSayTool)
+					)
+				} else {
+					userResponse = await this.ask(
+						"tool",
+						JSON.stringify({
+							tool: "newFileCreated",
+							path: this.getReadablePath(relPath),
+							content: newContent,
+						} satisfies ClaudeSayTool)
+					)
+				}
+			}
+			else {
+				userResponse = {
+					response: "yesButtonTapped",}
 			}
 			const { response, text, images } = userResponse
 
@@ -743,7 +756,7 @@ export class ClaudeDev {
 			// 	await this.closeDiffViews()
 			// }
 
-			if (response !== "yesButtonTapped") {
+			if (this.alwaysAllowAll || response !== "yesButtonTapped") {
 				if (!fileExists) {
 					if (updatedDocument.isDirty) {
 						await updatedDocument.save()
@@ -992,7 +1005,7 @@ export class ClaudeDev {
 				path: this.getReadablePath(relPath),
 				content: absolutePath,
 			} satisfies ClaudeSayTool)
-			if (this.alwaysAllowReadOnly) {
+			if (this.alwaysAllowAll || this.alwaysAllowReadOnly) {
 				await this.say("tool", message)
 			} else {
 				const { response, text, images } = await this.ask("tool", message)
@@ -1036,7 +1049,7 @@ export class ClaudeDev {
 				path: this.getReadablePath(relDirPath),
 				content: result,
 			} satisfies ClaudeSayTool)
-			if (this.alwaysAllowReadOnly) {
+			if (this.alwaysAllowAll || this.alwaysAllowReadOnly) {
 				await this.say("tool", message)
 			} else {
 				const { response, text, images } = await this.ask("tool", message)
@@ -1140,7 +1153,7 @@ export class ClaudeDev {
 				path: this.getReadablePath(relDirPath),
 				content: result,
 			} satisfies ClaudeSayTool)
-			if (this.alwaysAllowReadOnly) {
+			if (this.alwaysAllowAll || this.alwaysAllowReadOnly) {
 				await this.say("tool", message)
 			} else {
 				const { response, text, images } = await this.ask("tool", message)
@@ -1191,7 +1204,7 @@ export class ClaudeDev {
 				content: results,
 			} satisfies ClaudeSayTool)
 
-			if (this.alwaysAllowReadOnly) {
+			if (this.alwaysAllowAll || this.alwaysAllowReadOnly) {
 				await this.say("tool", message)
 			} else {
 				const { response, text, images } = await this.ask("tool", message)
@@ -1230,7 +1243,7 @@ export class ClaudeDev {
 				path: url,
 			} satisfies ClaudeSayTool)
 
-			if (this.alwaysAllowReadOnly) {
+			if (this.alwaysAllowAll || this.alwaysAllowReadOnly) {
 				await this.say("tool", message)
 			} else {
 				const { response, text, images } = await this.ask("tool", message)
