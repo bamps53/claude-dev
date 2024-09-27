@@ -725,7 +725,10 @@ export class ClaudeDev {
 			}
 			else {
 				userResponse = {
-					response: "yesButtonTapped",}
+					response: "yesButtonTapped",
+					text: undefined, // not used
+					images: undefined, // not used
+				}
 			}
 			const { response, text, images } = userResponse
 
@@ -756,7 +759,7 @@ export class ClaudeDev {
 			// 	await this.closeDiffViews()
 			// }
 
-			if (this.alwaysAllowAll || response !== "yesButtonTapped") {
+			if (response !== "yesButtonTapped") {
 				if (!fileExists) {
 					if (updatedDocument.isDirty) {
 						await updatedDocument.save()
@@ -1301,7 +1304,8 @@ export class ClaudeDev {
 			return [false, await this.sayAndCreateMissingParamError("execute_command", "command")]
 		}
 		this.consecutiveMistakeCount = 0
-		const { response, text, images } = await this.ask("command", command)
+		
+		const { response, text, images } = this.alwaysAllowAll? { response: "yesButtonTapped", text: undefined, images: undefined } : await this.ask("command", command)
 		if (response !== "yesButtonTapped") {
 			if (response === "messageResponse") {
 				await this.say("user_feedback", text, images)
