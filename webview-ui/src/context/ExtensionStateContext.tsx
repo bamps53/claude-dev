@@ -76,7 +76,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setCustomInstructions: (value) => setState((prevState) => ({ ...prevState, customInstructions: value })),
 		setAlwaysAllowReadOnly: (value) => setState((prevState) => ({ ...prevState, alwaysAllowReadOnly: value })),
 		setShowAnnouncement: (value) => setState((prevState) => ({ ...prevState, shouldShowAnnouncement: value })),
-		setAlwaysAllowAll: (value) => setState((prevState) => ({ ...prevState, allwaysAllAll: value })),
+		setAlwaysAllowAll: (value) => setState((prevState) => ({ ...prevState, alwaysAllowAll: value })),
 	}
 
 	return <ExtensionStateContext.Provider value={contextValue}>{children}</ExtensionStateContext.Provider>
